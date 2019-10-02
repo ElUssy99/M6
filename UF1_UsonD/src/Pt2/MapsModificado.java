@@ -59,7 +59,7 @@ public class MapsModificado {
 					opcion5(fw);
 					break;
 				case 6:
-					opcion6();
+					opcion6(ruta);
 					break;
 				case 7:
 					opcion7(ruta);
@@ -133,8 +133,31 @@ public class MapsModificado {
 		}
 	}
 	
-	public static void opcion6() {
+	public static void opcion6(String ruta) {
+		File archivo = new File(ruta);
+		Scanner entrada = null;
 		
+		try {
+			entrada = new Scanner(archivo);
+			while (entrada.hasNextLine()) {
+				String linea = entrada.next();
+				String[] partes = linea.split(" - ");
+				Float precio = Float.parseFloat(partes[1]);
+				String juego = partes[0];
+				System.out.println(juego + " - " + precio);
+//				almacen.put(juego, precio);
+			}
+		}catch (Exception e) {
+			System.out.println("Mensaje: " + e.getMessage());
+		}finally {
+			try {
+				if (entrada != null) {
+					entrada.close();
+				}
+			}catch (Exception e2) {
+				System.out.println("Mensaje: " + e2.getMessage());
+			}
+		}
 	}
 	
 	public static void opcion7(String ruta) {
@@ -144,7 +167,7 @@ public class MapsModificado {
 		try {
 			entrada = new Scanner(archivo);
 			while (entrada.hasNextLine()) {
-				String linea = entrada.next();
+				String linea = entrada.nextLine();
 				System.out.println(linea);
 			}
 		}catch (Exception e) {
