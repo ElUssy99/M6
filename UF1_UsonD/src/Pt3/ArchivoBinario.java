@@ -50,12 +50,9 @@ public class ArchivoBinario {
 		FileOutputStream fos = null;
 		DataOutputStream salida = null;
 		try {
-			fos = new FileOutputStream("..\\UF1_UsonD\\src\\becadades.dat");
+			fos = new FileOutputStream("..\\UF1_UsonD\\src\\becadades.dat", true);
 			salida = new DataOutputStream(fos);
 			String nombre_apellido;
-//			do {
-//				
-//			} while (condition);
 			System.out.print("Nombre y 1rApellido: ");
 			nombre_apellido = entrada.nextLine();
 			System.out.print("Sexo (H|M): ");
