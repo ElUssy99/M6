@@ -7,6 +7,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -27,47 +29,41 @@ public class Main {
 		// Escribir en el archivo myPeople.dat:
 		File f = new File("..\\UF1_UsonD\\src\\myPeople.dat");
 		File fXML = new File("..\\UF1_UsonD\\src\\myPeople.xml");
+		
+		// Escribir en el archivo myPeople.dat:
 		escribirArchivo(f);
-
-		// Leer archivo myPeople.dat
+		
+		// Leer archivo myPeople.dat:
 		leerArchivo(f);
-
+		
+		// Escribir en el archivo XML:
 		escribirXML(f, fXML);
 	}
 
 	public static void escribirArchivo(File f) {
 		// Crear las Personas:
-		Persona p1 = new Persona("Maria", "Lopez", 36);
-		Persona p2 = new Persona("Gustavo", "Gomez", 1);
-		Persona p3 = new Persona("Irene", "Salas", 36);
-		Persona p4 = new Persona("Roberto", "Morgade", 63);
-		Persona p5 = new Persona("Graciela", "Iglesias", 60);
+		Persona p1 = new Persona("Maria Lopez", 36);
+		Persona p2 = new Persona("Gustavo Gomez", 1);
+		Persona p3 = new Persona("Irene Salas", 36);
+		Persona p4 = new Persona("Roberto Morgade", 63);
+		Persona p5 = new Persona("Graciela Iglesias", 60);
 
 		// Escribir en el archivo:
 		FileOutputStream fos = null;
-		DataOutputStream salida = null;
+		ObjectOutputStream salida = null;
 
 		try {
 			fos = new FileOutputStream(f);
-			salida = new DataOutputStream(fos);
+			salida = new ObjectOutputStream(fos);
+			
 			System.out.print("Escribiendo las personas en el archivo (myPeople.dat).\n");
 
-			// Escribir nombre: // Escribir apellido: // Escribir edad:
-			salida.writeUTF(p1.getNombre());
-			salida.writeUTF(p1.getApellido());
-			salida.writeInt(p1.getEdad());
-			salida.writeUTF(p2.getNombre());
-			salida.writeUTF(p2.getApellido());
-			salida.writeInt(p2.getEdad());
-			salida.writeUTF(p3.getNombre());
-			salida.writeUTF(p3.getApellido());
-			salida.writeInt(p3.getEdad());
-			salida.writeUTF(p4.getNombre());
-			salida.writeUTF(p4.getApellido());
-			salida.writeInt(p4.getEdad());
-			salida.writeUTF(p5.getNombre());
-			salida.writeUTF(p5.getApellido());
-			salida.writeInt(p5.getEdad());
+			// Escribir nombre y edad:
+			salida.writeObject(p1);
+			salida.writeObject(p2);
+			salida.writeObject(p3);
+			salida.writeObject(p4);
+			salida.writeObject(p5);
 		} catch (FileNotFoundException e) {
 			System.out.println(e.getMessage());
 		} catch (IOException e) {
@@ -89,17 +85,18 @@ public class Main {
 	}
 
 	public static void leerArchivo(File f) {
+		Persona p;
 		FileInputStream fis = null;
-		DataInputStream entrada = null;
+		ObjectInputStream entrada = null;
 		try {
 			fis = new FileInputStream(f);
-			entrada = new DataInputStream(fis);
+			entrada = new ObjectInputStream(fis);
 			while (true) {
-				String nombre = entrada.readUTF();
-				String apellido = entrada.readUTF();
-				int edad = entrada.readInt();
-
-				System.out.println(nombre + " " + apellido + " - " + edad);
+				try {
+					System.out.println(p = (Persona) entrada.readObject());
+				} catch (ClassNotFoundException e) {
+					System.out.println("Mensaje: " + e.getMessage());
+				}
 			}
 		} catch (IOException e) {
 //			System.err.println("Mensaje: " + e.getMessage());
@@ -113,69 +110,51 @@ public class Main {
 	}
 
 	public static void escribirXML(File f, File fXML) throws ParserConfigurationException, SAXException {
+		Persona p;
 		FileInputStream fis = null;
-		DataInputStream entrada = null;
+		ObjectInputStream entrada = null;
+
 		try {
+			
 			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-			Document doc = dBuilder.parse(fXML);
-
+			Document doc = dBuilder.newDocument();
 			Element eRaiz = doc.createElement("personas");
 			doc.appendChild(eRaiz);
+			try {
+				fis = new FileInputStream(f);
+				entrada = new ObjectInputStream(fis);
+				while (true) {
+					// Elementos y atributos: 
+					Element ePersona = doc.createElement("persona");
+					eRaiz.appendChild(ePersona);
+					Element eNombre = doc.createElement("nombre");
+					ePersona.appendChild(eNombre);
+					Element eEdad = doc.createElement("edad");
+					ePersona.appendChild(eEdad);
+					
+					// Recoger los datos:
+					p = (Persona) entrada.readObject();
+					String nombre = p.getNombre();
+					String edad = String.valueOf(p.getEdad());
+					
+					// Añadir los datos al XML:
+					eNombre.setNodeValue(nombre);
+					eEdad.setNodeValue(edad);
+				}
 
-			// Falta el nodo persona
-			Attr aNombre = doc.createAttribute("nombre");
-			eRaiz.setAttributeNode(aNombre);
-			Attr aApellido = doc.createAttribute("apellido");
-			eRaiz.setAttributeNode(aApellido);
-			Attr aEdad = doc.createAttribute("edad");
-			eRaiz.setAttributeNode(aEdad);
-
-			fis = new FileInputStream(f);
-			entrada = new DataInputStream(fis);
-			while (true) {
-				String nombre = entrada.readUTF();
-				String apellido = entrada.readUTF();
-				int edad = entrada.readInt();
-				String edadStr = String.valueOf(edad);
-
-				aNombre.setValue(nombre);
-				aApellido.setValue(apellido);
-				aEdad.setValue(edadStr);
-
+			} catch (IOException e) {
+//				System.out.println("Mensaje: " + e.getMessage());
 			}
-
-//			TransformerFactory transformerFactory = TransformerFactory.newInstance();
+			
+			TransformerFactory transformerFactory = TransformerFactory.newInstance();
 			Transformer transformer = transformerFactory.newTransformer();
 			DOMSource source = new DOMSource(doc);
-			StreamResult result = new StreamResult(new File("ejercicio3.xml"));
-		} catch (IOException e) {
-//			System.err.println("Mensaje: " + e.getMessage());
-		} finally {
-			try {
-				entrada.close();
-			} catch (Exception e2) {
-				System.err.println("Mensaje: " + e2.getMessage());
-			}
+			StreamResult result = new StreamResult(new File("myPeople.xml"));
+			
+			entrada.close();
+		} catch (Exception e) {
+			System.err.println("Mensaje: " + e.getMessage());
 		}
-
-//		try {
-//			  DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-//			  DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-//			  Document doc = dBuilder.parse(fXML);
-
-//			  Element eRaiz = doc.createElement("persona");
-//			  doc.appendChild(eRaiz);
-//			  
-//			  Attr aNombre = doc.createAttribute("nombre");
-//			  eRaiz.setAttributeNode(aNombre);
-//			  Attr aApellido = doc.createAttribute("apellido");
-//			  eRaiz.setAttributeNode(aApellido);
-//			  Attr aEdad = doc.createAttribute("edad");
-//			  eRaiz.setAttributeNode(aEdad);
-//
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//		}
 	}
 }
