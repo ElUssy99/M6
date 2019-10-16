@@ -1,4 +1,4 @@
-package Pt5;
+package Pt5_1;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -113,7 +113,7 @@ public class Main {
 		System.out.println("// Final lectura del archivo myPeople.dat //");
 	}
 
-	public static void escribirXML(File f, File fXML) throws ParserConfigurationException, SAXException {
+	public static void escribirXML(File f, File fXML) {
 		Persona p;
 		FileInputStream fis = null;
 		ObjectInputStream entrada = null;
@@ -136,23 +136,11 @@ public class Main {
 					ePersona.appendChild(eNombre);
 					Element eEdad = doc.createElement("edad");
 					ePersona.appendChild(eEdad);
-
+					
 					// Recoger los datos:
 					p = (Persona) entrada.readObject();
 					String nombre = p.getNombre();
 					String edad = String.valueOf(p.getEdad());
-
-					// Segunda manera de recoger las personas:
-//					String nombre = null;
-//					String edad = null;
-//					Object aux = entrada.readObject();
-//					while (aux != null) {
-//						if (aux instanceof Persona) {
-//							nombre = ((Persona) aux).getNombre();
-//							edad = String.valueOf(((Persona) aux).getEdad());
-//						}
-////						aux = entrada.readObject();
-//					}
 
 					// Añadir los datos al XML:
 //					eNombre.setNodeValue(nombre);
