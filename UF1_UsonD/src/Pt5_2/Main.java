@@ -1,17 +1,11 @@
 package Pt5_2;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.util.Scanner;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
@@ -19,17 +13,22 @@ import javax.xml.transform.stream.StreamResult;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.xml.sax.SAXException;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 public class Main {
-
-	public static void main(String[] args) throws SAXException, IOException, TransformerException {
+	
+	static File fXML = new File("..\\UF1_UsonD\\src\\cursos.xml");
+	
+	public static void main(String[] args) {
+		escribirXML();
+		menu();
+	}
+	
+	public static void menu() {
 		Scanner entrada = new Scanner(System.in);
 		boolean continuar = true;
-
-		File fXML = new File("..\\UF1_UsonD\\src\\cursos.xml");
-		escribirXML(fXML);
-
 		while (continuar) {
 			System.out.println("// MENU CREAR O ALIMINAR ALUMNOS //");
 			System.out.println("1. Añadir alumno");
@@ -38,13 +37,15 @@ public class Main {
 			System.out.println("Escoge una opcion entre 1 y 2 (3 para salir):");
 
 			int opcion = entrada.nextInt();
-
+			
+			boolean editar = false;
 			switch (opcion) {
 			case 1:
-				addUser(fXML);
+				editar = true;
+				editarXML(editar);
 				break;
 			case 2:
-				
+				editarXML(editar);
 				break;
 			case 3:
 				continuar = salir(continuar);
@@ -53,19 +54,14 @@ public class Main {
 				System.err.println("No has escogido ninguna de las opciones.");
 			}
 		}
-
 	}
-
+	
 	// Dentro de Curso hay tutor, Alumnos y Modulo/s.
 	// Dentro de Alumnos hay una lista de todos los alumnos.
 	// Dentro de Modulos hay nombre de Modulo, UFs, profesores.
 	// En Modulos tiene un Attr id.
 	// Personas puede ser tuto, alumno o profesor.
-
-	public static void escribirXML(File fXML) {
-		FileInputStream fis = null;
-		ObjectInputStream entrada = null;
-
+	public static void escribirXML() {
 		System.out.println("// Escribiendo las personas en el archivo (cursos.xml) //");
 		try {
 			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
@@ -267,47 +263,123 @@ public class Main {
 			StreamResult result = new StreamResult(fXML);
 
 			transformer.transform(source, result);
+			System.out.println("// Archivo XML creado correctamente //");
 		} catch (Exception e) {
 			System.out.println("Mensaje: " + e.getMessage());
 		}
 	}
-
-	public static void addUser(File fXML) throws SAXException, IOException, TransformerException {
-		Scanner entrada = new Scanner(System.in);
-		System.out.println("De que curso quieres añadir el alumno (AMS | AWS)");
-		String curso = entrada.nextLine();
-		if (curso.equalsIgnoreCase("AMS")) {
-			try {
-				DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-		        DocumentBuilder db = dbf.newDocumentBuilder();
-		        Document document = db.parse(fXML);
-		        document.getDocumentElement().normalize();
-		        
-		        // https://stackoverflow.com/questions/8925054/how-to-navigate-dom-tree-from-xml-in-java
-		        // En esta web tengo como navegar en un archivo XML
-		        
-				TransformerFactory factory = TransformerFactory.newInstance();
-		        Transformer transformer = factory.newTransformer();
-		        DOMSource domSource = new DOMSource(document);
-		        StreamResult streamResult = new StreamResult(new File("cdCatalog.xml"));
-		        transformer.transform(domSource, streamResult);
-
-		        DOMSource source = new DOMSource(document);
-			} catch (ParserConfigurationException e) {
-				System.out.println("Mensaje: " + e.getMessage());
+	
+	public static void editarXML(boolean editar) {
+		Scanner lector = new Scanner(System.in);
+		try {
+			// Al pasarle los datos de editar el archivo XML, no es necesario copiar este codigo en cada metodo:
+			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+			DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+			Document doc = dBuilder.parse(fXML);
+			doc.getDocumentElement().normalize();
+			System.out.println("\nIntroduce el ID del curso (AMS2 | AWS2):");
+			String id = lector.nextLine();
+			// A partir del Nodo que se le pasa, recoge todos los Nodos que cuelgan de este:
+			NodeList nList = doc.getElementsByTagName("cursos");
+			// Depende del estado del Boolean, llama a un metodo u otro:
+			if (editar == true) {
+				afegirAlumne(doc, nList, id);
+			} else {
+				eliminarAlumne(doc, nList, id);
 			}
-	        
-		} else if (curso.equalsIgnoreCase("AWS")) {
-			
-		} else {
-			
+			TransformerFactory transformerFactory = TransformerFactory.newInstance();
+			Transformer transformer = transformerFactory.newTransformer();
+			DOMSource source = new DOMSource(doc);
+			StreamResult result = new StreamResult(fXML);
+			transformer.transform(source, result);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static void afegirAlumne(Document doc, NodeList nList, String id) {
+		Scanner entrada = new Scanner(System.in);
+		// Con el bucle, recorro el NodeList que se le pasa, se recoge los Nodos, y los compara.
+		for (int i = 0; i < nList.getLength(); i++) {
+			Node nNode = nList.item(i);
+			// Si el tipo de Nodo es un Elemento y este coincide con que se llama "alumnos"...
+			if (nNode.getNodeType() == Node.ELEMENT_NODE) {
+				// En caso de que el Nodo se llame "alumnos", crea un nuevo Element con el nombre del alumno:
+				if (nNode.getNodeName().equals("alumnos")) {
+					System.out.println("Introduce el nombre del alumno:");
+					String nom = entrada.nextLine();
+					Element alumne = doc.createElement("alumno");
+					alumne.appendChild(doc.createTextNode(nom));
+					nNode.appendChild(alumne);
+					System.out.println("\nAlumno insertado correctamente.");
+				}
+				// Si este Nodo no se llama "alumno", salta a este IF.
+				// Si tiene un atributo...
+				if (nNode.hasAttributes()) {
+					// NameNodeMap sirve para recoger el Atributo:
+					NamedNodeMap nodeMap = nNode.getAttributes();
+					// Hacemos el mismo bucle para leer el NameNodeMap como el anterior para el NodeList:
+					for (int x = 0; x < nodeMap.getLength(); x++) {
+						Node temp = nodeMap.item(x);
+						// Si el ID que se le pasa por parametros es el mimso que el que recoge el bucle...
+						if (id.equals(temp.getNodeValue())) {
+							// Si tiene un hijo el Nodo, vuelve a llamar al metodo:
+							if (nNode.hasChildNodes()) {
+								afegirAlumne(doc, nNode.getChildNodes(), id);
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 
-	public static void delUser() {
-
+	public static void eliminarAlumne(Document doc, NodeList nList, String id) {
+		Scanner entrada = new Scanner(System.in);
+		// Con el bucle, recorro el NodeList que se le pasa, se recoge los Nodos, y los compara.
+		for (int i = 0; i < nList.getLength(); i++) {
+			Node nNode = nList.item(i);
+			// Si el tipo de Nodo es un Elemento y este coincide con que se llama "alumnos"...
+			if (nNode.getNodeType() == Node.ELEMENT_NODE) {
+				// En caso de que el Nodo se llame "alumnos", elimina Element con el nombre del alumno:
+				if (nNode.getNodeName().equals("alumnos")) {
+					System.out.println("Introduce el nombre del alumno:");
+					String nom = entrada.nextLine();
+					// Este FOR es el que menciono en el comentario anterior, que busca el contenido del Elemento,
+					// y si es el mismo que el que se busca, lo elimina. No elimina el Nodo "alumnos" (ya que
+					// trabajamos desde ahi), si no el Elemento de "alumno":
+					for (int x = 0; x < nNode.getChildNodes().getLength(); x++) {
+						Element eElement = (Element) nNode;
+						NodeList alumnes = eElement.getElementsByTagName("alumno");
+						Element alumne = (Element) alumnes.item(x);
+						if (nom.equals(alumne.getTextContent())) {
+							Node parent = alumne.getParentNode();
+							parent.removeChild(alumne);
+							System.out.println("\nAlumno eliminado correctamente.");
+						}
+					}
+				}
+				// Si este Nodo no se llama "alumno", salta a este IF.
+				// Si tiene un atributo...
+				if (nNode.hasAttributes()) {
+					// NameNodeMap sirve para recoger el Atributo:
+					NamedNodeMap nodeMap = nNode.getAttributes();
+					// Hacemos el mismo bucle para leer el NameNodeMap como el anterior para el NodeList:
+					for (int temp = 0; temp < nodeMap.getLength(); temp++) {
+						Node tempNode = nodeMap.item(temp);
+						// Si el ID que se le pasa por parametros es el mimso que el que recoge el bucle...
+						if (id.equals(tempNode.getNodeValue())) {
+							// Si tiene un hijo el Nodo, vuelve a llamar al metodo:
+							if (nNode.hasChildNodes()) {
+								eliminarAlumne(doc, nNode.getChildNodes(), id);
+							}
+						}
+					}
+				}
+			}
+		}
 	}
-
+	
 	public static boolean salir(boolean continuar) {
 		continuar = false;
 		return continuar;
