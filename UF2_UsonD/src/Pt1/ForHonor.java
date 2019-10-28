@@ -22,15 +22,15 @@ public class ForHonor {
 		insertFaction(3, "Samurai", "La palabra samurái (samurai) (también samuray) generalmente se utiliza para designar una gran variedad de guerreros del antiguo Japón, aunque su verdadero significado es el de una élite militar que gobernó el país durante cientos de años.");
 		
 		// Insertar Caballeros:
-		insertCharacter(1, "David", 0, 0, 0);
-		insertCharacter(2, "Dario", 0, 0, 0);
-		insertCharacter(3, "Marc", 0, 0, 0);
+		insertCharacter(1, "David", 6, 4, 1);
+		insertCharacter(2, "Dario", 8, 6, 1);
+		insertCharacter(3, "Marc", 7, 7, 1);
 		// Insertar Vikingos:
-		insertCharacter(1, "Adri", 0, 0, 0);
-		insertCharacter(2, "Jonatan", 0, 0, 0);
+		insertCharacter(1, "Adri", 4, 9, 2);
+		insertCharacter(2, "Jonatan", 5, 8, 2);
 		// Insertar Smurais:
-		insertCharacter(1, "Xon", 0, 0, 0);
-		insertCharacter(2, "Pachon", 0, 0, 0);
+		insertCharacter(1, "Xon", 11, 3, 3);
+		insertCharacter(2, "Pachon", 9, 4, 3);
 	}
 	
 	public static void connect() {
