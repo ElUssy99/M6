@@ -5,6 +5,8 @@ import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class ForHonor {
 	
@@ -26,11 +28,15 @@ public class ForHonor {
 		insertCharacter(2, "Dario", 8, 6, 1);
 		insertCharacter(3, "Marc", 7, 7, 1);
 		// Insertar Vikingos:
-		insertCharacter(1, "Adri", 4, 9, 2);
-		insertCharacter(2, "Jonatan", 5, 8, 2);
+		insertCharacter(4, "Adri", 4, 9, 2);
+		insertCharacter(5, "Jonatan", 5, 8, 2);
 		// Insertar Smurais:
-		insertCharacter(1, "Xon", 11, 3, 3);
-		insertCharacter(2, "Pachon", 9, 4, 3);
+		insertCharacter(6, "Xon", 11, 3, 3);
+		insertCharacter(7, "Pachon", 9, 4, 3);
+		
+		// Selects de la tabla Personaje:
+		selects();
+		
 	}
 	
 	public static void connect() {
@@ -72,11 +78,8 @@ public class ForHonor {
 		try (Connection conn = DriverManager.getConnection(url)) {
 			Statement stmt = conn.createStatement();
 			stmt.execute(sql);
-			if (stmt.execute(sql)) {
-				System.out.println("Se ha ejecutado el codigo SQL de Faccion.");
-			}
 		} catch (Exception e) {
-			System.out.println(e.getMessage());
+//			System.err.println(e.getMessage());
 		}
 	}
 	
@@ -92,29 +95,27 @@ public class ForHonor {
 		try (Connection conn = DriverManager.getConnection(url)) {
 			Statement stmt = conn.createStatement();
 			stmt.execute(sql);
-			if (stmt.execute(sql)) {
-				System.out.println("Se ha ejecutado el codigo SQL de Personaje.");
-			}
 		} catch (Exception e) {
-			System.out.println(e.getMessage());
+//			System.err.println(e.getMessage());
 		}
 	}
 	
 	public static void insertFaction(int faccion_id, String nombre_faccion, String lore) {
-		String sql = "INSERT INTO Faccion (faccion_id, nombre_faccion, lore) VALUES (?,\"?\",\"?\")";
+		String sql = "INSERT INTO Faccion (faccion_id, nombre_faccion, lore) VALUES (?,?,?)";
 		try {
 			Connection conn = DriverManager.getConnection(url);
 			PreparedStatement pstmt = conn.prepareStatement(sql);
 			pstmt.setInt(1, faccion_id);
 			pstmt.setString(2, nombre_faccion);
 			pstmt.setString(3, lore);
+			pstmt.executeUpdate();
 		} catch (Exception e) {
-			System.out.println(e.getMessage());
+//			System.err.println(e.getMessage());
 		}
 	}
 	
 	public static void insertCharacter(int personaje_id, String nombre_personaje, int ataque, int defensa, int faccion_id) {
-		String sql = "INSERT INTO Faccion (faccion_id, nombre_faccion, lore) VALUES (?,\"?\",?,?,?)";
+		String sql = "INSERT INTO Personaje (personaje_id, nombre_personaje, ataque, defensa, faccion_id) VALUES (?,?,?,?,?)";
 		try {
 			Connection conn = DriverManager.getConnection(url);
 			PreparedStatement pstmt = conn.prepareStatement(sql);
@@ -123,8 +124,78 @@ public class ForHonor {
 			pstmt.setInt(3, ataque);
 			pstmt.setInt(4, defensa);
 			pstmt.setInt(5, faccion_id);
+			pstmt.executeUpdate();
 		} catch (Exception e) {
-			System.out.println(e.getMessage());
+//			System.err.println(e.getMessage());
+		}
+	}
+	
+	public static void selects() {
+		selectPersonajes();
+		selectCaballeros();
+		selectMejorSamurai();
+	}
+	
+	public static void selectPersonajes() {
+		String sql = "SELECT * FROM Personaje";
+		
+		try {
+			Connection conn = DriverManager.getConnection(url);
+			Statement stmt = conn.createStatement();
+			ResultSet rs = stmt.executeQuery(sql);
+			System.out.println("\n// TABLA PERSONAJE (Todos) //");
+			System.out.println("ID	NOMBRE	ATAQUE	DEFENSA	FACCION");
+			while (rs.next()) {
+				System.out.println(rs.getInt("personaje_id") + "\t" + 
+									rs.getString("nombre_personaje") + "\t" + 
+									rs.getInt("ataque") + "\t" + 
+									rs.getInt("defensa") + "\t" + 
+									rs.getInt("faccion_id"));
+			}
+		} catch (Exception e) {
+			System.err.println(e.getMessage());
+		}
+	}
+	
+	public static void selectCaballeros() {
+		String sql = "SELECT * FROM Personaje WHERE faccion_id = 1";
+		
+		try {
+			Connection conn = DriverManager.getConnection(url);
+			Statement stmt = conn.createStatement();
+			ResultSet rs = stmt.executeQuery(sql);
+			System.out.println("\n// TABLA PERSONAJE (Caballeros) //");
+			System.out.println("ID	NOMBRE	ATAQUE	DEFENSA	FACCION");
+			while (rs.next()) {
+				System.out.println(rs.getInt("personaje_id") + "\t" + 
+									rs.getString("nombre_personaje") + "\t" + 
+									rs.getInt("ataque") + "\t" + 
+									rs.getInt("defensa") + "\t" + 
+									rs.getInt("faccion_id"));
+			}
+		} catch (Exception e) {
+			System.err.println(e.getMessage());
+		}
+	}
+	
+	public static void selectMejorSamurai() {
+		String sql = "SELECT * FROM Personaje WHERE faccion_id = 3 and ataque = (SELECT max(ataque) FROM Personaje WHERE faccion_id = 3)";
+		
+		try {
+			Connection conn = DriverManager.getConnection(url);
+			Statement stmt = conn.createStatement();
+			ResultSet rs = stmt.executeQuery(sql);
+			System.out.println("\n// TABLA PERSONAJE (Samurai con mas ataque) //");
+			System.out.println("ID	NOMBRE	ATAQUE	DEFENSA	FACCION");
+			while (rs.next()) {
+				System.out.println(rs.getInt("personaje_id") + "\t" + 
+									rs.getString("nombre_personaje") + "\t" + 
+									rs.getInt("ataque") + "\t" + 
+									rs.getInt("defensa") + "\t" + 
+									rs.getInt("faccion_id"));
+			}
+		} catch (Exception e) {
+			System.err.println(e.getMessage());
 		}
 	}
 	
